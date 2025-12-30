@@ -752,7 +752,7 @@ fun HomeScreen(
                                     )
                                     Spacer(modifier = Modifier.height(16.dp))
                                     Text(
-                                        text = "No notifications match your filters",
+                                        text = "Aucune notification n'a été trouvée",
                                         style = MaterialTheme.typography.bodyLarge,
                                         textAlign = TextAlign.Center,
                                         color = Color.Gray
@@ -767,7 +767,7 @@ fun HomeScreen(
                                                 viewModel.setSelectedDateRange(null)
                                             }
                                         ) {
-                                            Text("Clear Filters")
+                                            Text("Effacer les filtres")
                                         }
                                     }
                                 }
@@ -785,7 +785,7 @@ fun HomeScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(
-                                        text = "Showing ${notifications.size} notifications",
+                                        text = "Affichage de ${notifications.size} notifications",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = Color.Gray
                                     )
@@ -798,7 +798,7 @@ fun HomeScreen(
                                             viewModel.setSelectedDateRange(null)
                                         }
                                     ) {
-                                        Text("Clear Filters")
+                                        Text("Effacer le(s) filtre(s)")
                                     }
                                 }
                             }
@@ -899,7 +899,7 @@ fun SimpleDatePickerDialog(
                     .fillMaxWidth()
             ) {
                 Text(
-                    "Select Date",
+                    "Sélectionner une date",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 16.dp)
@@ -917,7 +917,7 @@ fun SimpleDatePickerDialog(
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("Day", style = MaterialTheme.typography.bodySmall)
+                        Text("Jour", style = MaterialTheme.typography.bodySmall)
                         IconButton(onClick = {
                             if (day > 1) day-- else {
                                 // Move to previous month
@@ -954,7 +954,7 @@ fun SimpleDatePickerDialog(
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("Month", style = MaterialTheme.typography.bodySmall)
+                        Text("Mois", style = MaterialTheme.typography.bodySmall)
                         IconButton(onClick = {
                             if (month > 0) month-- else {
                                 month = 11
@@ -981,7 +981,7 @@ fun SimpleDatePickerDialog(
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("Year", style = MaterialTheme.typography.bodySmall)
+                        Text("Année", style = MaterialTheme.typography.bodySmall)
                         IconButton(onClick = { year-- }) {
                             Icon(Icons.Default.Remove, contentDescription = "Previous Year")
                         }
@@ -993,7 +993,7 @@ fun SimpleDatePickerDialog(
                 }
 
                 // Show selected date
-                val dateFormat = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault())
+                val dateFormat = SimpleDateFormat("EEEE d MMMM yyyy", Locale.FRANCE)
                 calendar.set(year, month, day)
                 Text(
                     dateFormat.format(calendar.time),
@@ -1011,7 +1011,7 @@ fun SimpleDatePickerDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel")
+                        Text("Annuler")
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -1062,7 +1062,7 @@ fun SimpleDateRangePickerDialog(
             ) {
                 // Title
                 Text(
-                    text = "Select Date Range", // TODO: Use stringResource when strings added
+                    text = "Sélectionner une période", // TODO: Use stringResource when strings added
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 20.dp)
@@ -1075,7 +1075,7 @@ fun SimpleDateRangePickerDialog(
                 ) {
                     // From Date
                     DateInputField(
-                        label = "From:",
+                        label = "Du:",
                         date = startDate,
                         primaryColor = primaryColor,
                         onClick = { showCalendarFor = "start" }
@@ -1083,7 +1083,7 @@ fun SimpleDateRangePickerDialog(
 
                     // To Date
                     DateInputField(
-                        label = "To:",
+                        label = "Au:",
                         date = endDate,
                         primaryColor = primaryColor,
                         onClick = { showCalendarFor = "end" }
@@ -1092,7 +1092,7 @@ fun SimpleDateRangePickerDialog(
 
                 // Quick Select Label
                 Text(
-                    text = "Quick Select:",
+                    text = "Sélection rapide :",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1124,7 +1124,7 @@ fun SimpleDateRangePickerDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel")
+                        Text("Annuler")
                     }
 
                     Spacer(modifier = Modifier.width(12.dp))
@@ -1143,7 +1143,7 @@ fun SimpleDateRangePickerDialog(
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
-                            text = "Apply",
+                            text = "Appliquer",
                             fontWeight = FontWeight.SemiBold
                         )
                     }
@@ -1244,7 +1244,7 @@ private fun QuickSelectButtons(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             QuickSelectButton(
-                text = "Today",
+                text = "Aujourd'hui",
                 isSelected = selectedButton == "today",
                 primaryColor = primaryColor,
                 modifier = Modifier.weight(1f),
@@ -1259,7 +1259,7 @@ private fun QuickSelectButtons(
             )
 
             QuickSelectButton(
-                text = "Last 7d",
+                text = "7 derniers j",
                 isSelected = selectedButton == "last_7d",
                 primaryColor = primaryColor,
                 modifier = Modifier.weight(1f),
@@ -1272,7 +1272,7 @@ private fun QuickSelectButtons(
             )
 
             QuickSelectButton(
-                text = "Last 30d",
+                text = "30 derniers j",
                 isSelected = selectedButton == "last_30d",
                 primaryColor = primaryColor,
                 modifier = Modifier.weight(1f),
@@ -1291,7 +1291,7 @@ private fun QuickSelectButtons(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             QuickSelectButton(
-                text = "This Week",
+                text = "Cette semaine",
                 isSelected = selectedButton == "this_week",
                 primaryColor = primaryColor,
                 modifier = Modifier.weight(1f),
@@ -1304,7 +1304,7 @@ private fun QuickSelectButtons(
             )
 
             QuickSelectButton(
-                text = "This Month",
+                text = "Ce mois-ci",
                 isSelected = selectedButton == "this_month",
                 primaryColor = primaryColor,
                 modifier = Modifier.weight(1f),
@@ -1317,7 +1317,7 @@ private fun QuickSelectButtons(
             )
 
             QuickSelectButton(
-                text = "This Year",
+                text = "Cette année",
                 isSelected = selectedButton == "this_year",
                 primaryColor = primaryColor,
                 modifier = Modifier.weight(1f),
@@ -1385,7 +1385,7 @@ private fun SelectedRangeDisplay(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             Text(
-                text = "SELECTED RANGE",
+                text = "PÉRIODE SÉLECTIONNÉE",
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
                 color = primaryColor,
@@ -1394,7 +1394,7 @@ private fun SelectedRangeDisplay(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            val sdf = SimpleDateFormat("EEE, MMM d, yyyy", Locale.getDefault())
+            val sdf = SimpleDateFormat("EEE d MMM yyyy", Locale.FRANCE)
             Text(
                 text = "${sdf.format(Date(startDate))} → ${sdf.format(Date(endDate))}",
                 style = MaterialTheme.typography.bodySmall,
@@ -1440,7 +1440,7 @@ private fun MiniCalendarDialog(
                                 displayYear--
                             } else displayMonth--
                         }) {
-                            Icon(Icons.Default.ChevronLeft, "Previous")
+                            Icon(Icons.Default.ChevronLeft, "Précédent")
                         }
 
                         IconButton(onClick = {
@@ -1449,7 +1449,7 @@ private fun MiniCalendarDialog(
                                 displayYear++
                             } else displayMonth++
                         }) {
-                            Icon(Icons.Default.ChevronRight, "Next")
+                            Icon(Icons.Default.ChevronRight, "Suivant")
                         }
                     }
                 }
@@ -1461,7 +1461,7 @@ private fun MiniCalendarDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    listOf("Mo", "Tu", "We", "Th", "Fr", "Sa", "Su").forEach {
+                    listOf("Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di").forEach {
                         Text(
                             text = it,
                             style = MaterialTheme.typography.labelSmall,
@@ -1575,19 +1575,19 @@ private fun CalendarDay(
 // Helper function to get month name - VERSION CORRECTE
 fun getMonthName(month: Int): String {
     return when (month) {
-        0 -> "January"
-        1 -> "February"
-        2 -> "March"
-        3 -> "April"
-        4 -> "May"
-        5 -> "June"
-        6 -> "July"
-        7 -> "August"
-        8 -> "September"
-        9 -> "October"
-        10 -> "November"
-        11 -> "December"
-        else -> "Unknown"
+        0 -> "Janvier"
+        1 -> "Février"
+        2 -> "Mars"
+        3 -> "Avril"
+        4 -> "Mai"
+        5 -> "Juin"
+        6 -> "Juillet"
+        7 -> "Août"
+        8 -> "Septembre"
+        9 -> "Octobre"
+        10 -> "Novembre"
+        11 -> "Décembre"
+        else -> "Inconnu"
     }
 }
 
