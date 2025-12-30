@@ -1,0 +1,193 @@
+<resources>
+    <string name="app_name">Kufay</string>
+
+    <!-- Home Screen -->
+    <string name="search_hint">Rechercher des notifications…</string>
+    <string name="no_notifications">Aucune notification trouvée</string>
+    <string name="no_trash">Aucune notification dans la corbeille</string>
+    <string name="showing_notifications">Affichage de %d notifications</string>
+    <string name="clear_filters">Effacer les filtres</string>
+    <string name="no_notifications_match">Aucune notification ne correspond à vos filtres</string>
+
+    <!-- Dashboard -->
+    <string name="total_received_today">Total Reçu \n Aujourd\'hui</string>
+    <string name="by_application">Par Application</string>
+    <string name="read_total">Lire le Total du Jour</string>
+    <string name="hide_amount">Masquer le montant</string>
+    <string name="show_amount">Afficher le montant</string>
+    <string name="debug_amounts">Debug Montants</string>
+    <string name="debug_incoming_amounts">Debug: Montants Entrants</string>
+    <string name="no_incoming_transactions">Aucune transaction entrante trouvée</string>
+    <string name="total">TOTAL</string>
+    <string name="close">Fermer</string>
+
+    <!-- Filter Options -->
+    <string name="all">Tout</string>
+    <string name="wave">Wave</string>
+    <string name="wave_business">Wave Biz</string>
+    <string name="orange_money">Orange</string>
+    <string name="mixx">Mixx</string>
+    <string name="filter">Filtrer</string>
+
+    <!-- Date Range -->
+    <string name="all_time">Tout le temps</string>
+    <string name="today">Aujourd\'hui</string>
+    <string name="custom">Personnalisé</string>
+    <string name="select_date">Sélectionner une date</string>
+    <string name="select_date_range">Sélectionner une plage de dates</string>
+    <string name="from">De:</string>
+    <string name="to">À:</string>
+    <string name="quick_select">Sélection rapide:</string>
+    <string name="last_7_days">7 derniers j</string>
+    <string name="last_30_days">30 derniers j</string>
+    <string name="this_week">Cette semaine</string>
+    <string name="this_month">Ce mois-ci</string>
+    <string name="this_year">Cette année</string>
+    <string name="selected_range">Plage sélectionnée</string>
+    <string name="calendar_icon">📅</string>
+    <string name="apply">Appliquer</string>
+    <string name="cancel">Annuler</string>
+
+    <!-- Calendar Navigation -->
+    <string name="previous_month">Mois précédent</string>
+    <string name="next_month">Mois suivant</string>
+    <string name="previous">Précédent</string>
+    <string name="next">Suivant</string>
+
+    <!-- Days of week (short) -->
+    <string name="day_mon">Lu</string>
+    <string name="day_tue">Ma</string>
+    <string name="day_wed">Me</string>
+    <string name="day_thu">Je</string>
+    <string name="day_fri">Ve</string>
+    <string name="day_sat">Sa</string>
+    <string name="day_sun">Di</string>
+
+    <!-- Months (for calendar) -->
+    <string name="month_january">Janvier</string>
+    <string name="month_february">Février</string>
+    <string name="month_march">Mars</string>
+    <string name="month_april">Avril</string>
+    <string name="month_may">Mai</string>
+    <string name="month_june">Juin</string>
+    <string name="month_july">Juillet</string>
+    <string name="month_august">Août</string>
+    <string name="month_september">Septembre</string>
+    <string name="month_october">Octobre</string>
+    <string name="month_november">Novembre</string>
+    <string name="month_december">Décembre</string>
+
+    <!-- Short month names for date display -->
+    <string name="month_jan_short">Jan</string>
+    <string name="month_feb_short">Fév</string>
+    <string name="month_mar_short">Mar</string>
+    <string name="month_apr_short">Avr</string>
+    <string name="month_may_short">Mai</string>
+    <string name="month_jun_short">Jun</string>
+    <string name="month_jul_short">Jul</string>
+    <string name="month_aug_short">Aoû</string>
+    <string name="month_sep_short">Sep</string>
+    <string name="month_oct_short">Oct</string>
+    <string name="month_nov_short">Nov</string>
+    <string name="month_dec_short">Déc</string>
+
+    <!-- Day, Month, Year -->
+    <string name="day">Jour</string>
+    <string name="month">Mois</string>
+    <string name="year">Année</string>
+    <string name="ok">OK</string>
+
+    <!-- Trash -->
+    <string name="trash">Corbeille</string>
+    <string name="amount_filter">Filtre de montant</string>
+    <string name="set_range">Définir la plage</string>
+    <string name="clear">Effacer</string>
+    <string name="deleted_notifications">Notifications supprimées</string>
+    <string name="your_trash_is_empty">Votre corbeille est vide</string>
+    <string name="trash_settings">Paramètres de la corbeille</string>
+    <string name="items_will_be_deleted">Les éléments seront définitivement supprimés après %s</string>
+    <string name="one_day">1 jour</string>
+    <string name="days">%d jours</string>
+    <string name="auto_delete_settings">Paramètres de suppression automatique</string>
+    <string name="choose_when_delete">Choisir quand supprimer définitivement les éléments de la corbeille:</string>
+    <string name="after_1_day">Après 1 jour</string>
+    <string name="after_7_days">Après 7 jours</string>
+    <string name="after_30_days">Après 30 jours</string>
+    <string name="done">Terminé</string>
+
+    <!-- Settings -->
+    <string name="settings">Paramètres</string>
+    <string name="tts_settings">Paramètres de synthèse vocale</string>
+    <string name="auto_read">Lecture automatique des nouvelles notifications</string>
+    <string name="language">Langue</string>
+    <string name="french">Français</string>
+    <string name="english">Anglais</string>
+    <string name="voice">Voix</string>
+    <string name="female">Féminine</string>
+    <string name="male">Masculine</string>
+    <string name="speech_rate">Vitesse de lecture</string>
+    <string name="speech_pitch">Hauteur de la voix</string>
+    <string name="lower">Plus bas</string>
+    <string name="normal">Normal</string>
+    <string name="higher">Plus haut</string>
+    <string name="app_language">Langue de l\'application</string>
+    <string name="tts_language">Langue de la synthèse vocale</string>
+    <string name="enable_auto_read">Activer la lecture automatique des notifications</string>
+    <string name="use_wolof_recordings">Utiliser les enregistrements Wolof</string>
+    <string name="test_tts_settings">Tester les paramètres actuels de synthèse vocale</string>
+    <string name="test_wolof_files">Tester les fichiers Wolof</string>
+    <string name="wolof">Wolof</string>
+    <string name="voice_settings">Paramètres de la voix</string>
+
+    <!-- Trash Settings -->
+    <string name="trash_settings_title">Paramètres de la corbeille</string>
+    <string name="auto_delete">Supprimer automatiquement les notifications supprimées après:</string>
+    <string name="seven_days">7 jours</string>
+    <string name="thirty_days">30 jours</string>
+
+    <!-- Permissions -->
+    <string name="permissions">Autorisations</string>
+    <string name="notification_permission_info">Kufay a besoin d\'accéder aux notifications pour capturer les notifications financières. Si les notifications ne sont pas capturées, veuillez vérifier que cette autorisation est accordée dans les paramètres système.</string>
+    <string name="open_notification_settings">Accéder aux Paramètres de notification</string>
+
+    <!-- Security -->
+    <string name="security">Sécurité</string>
+    <string name="pin_protection">Protection par code PIN</string>
+    <string name="pin_protection_desc">Exiger un code PIN à 4 chiffres pour accéder à l\'application</string>
+    <string name="change_pin">Changer le code PIN</string>
+
+    <!-- Theme -->
+    <string name="theme_color">Couleur du Thème</string>
+    <string name="green">Vert</string>
+    <string name="blue">Bleu</string>
+    <string name="pink">Rose</string>
+    <string name="red">Rouge</string>
+    <string name="orange">Orange</string>
+    <string name="yellow">Jaune</string>
+
+    <!-- About -->
+    <string name="about">À propos de Kufay</string>
+    <string name="version">Version 1.0.0</string>
+    <string name="app_description">Kufay vous aide à suivre et gérer vos notifications financières.</string>
+
+    <!-- Notification Card -->
+    <string name="incoming">Entrant</string>
+    <string name="play">Lire</string>
+    <string name="stop">Arrêter</string>
+    <string name="delete">Supprimer</string>
+    <string name="restore">Restaurer</string>
+    <string name="franc_cfa">Franc CFA</string>
+    <string name="transfer_received">Transfert reçu</string>
+    <string name="transfer_sent">Transfert envoyé</string>
+    <string name="payment_made">Paiement effectué</string>
+
+    <!-- Navigation -->
+    <string name="back">Retour</string>
+    <string name="refresh">Actualiser</string>
+
+    <!-- Common -->
+    <string name="loading">Chargement…</string>
+    <string name="error">Erreur</string>
+    <string name="retry">Réessayer</string>
+    <string name="save">Enregistrer</string>
+</resources>
