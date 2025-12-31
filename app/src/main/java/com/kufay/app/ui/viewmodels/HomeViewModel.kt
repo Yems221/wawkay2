@@ -481,20 +481,21 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    // ✅ BOUTON PLAY HOMESCREEN : Lit la version COURTE (montant seul)
     fun readNotification(notification: Notification) {
-        // For Orange Money notifications that don't have "recu" or "reçu", use manuallySpeak
-        if (notification.packageName == "com.google.android.apps.messaging" &&
-            notification.title.contains("OrangeMoney", ignoreCase = true) &&
-            !notification.text.contains("recu", ignoreCase = true) &&
-            !notification.text.contains("reçu", ignoreCase = true)) {
+        ttsService.speakNotification(notification)  // Version simplifiée
 
-            ttsService.manuallySpeak(notification)
-        } else {
-            // For all other notifications, use the regular speakNotification method
-            ttsService.speakNotification(notification)
+        if (!notification.isRead) {
+            viewModelScope.launch {
+                notificationRepository.markAsRead(notification.id, true)
+            }
         }
+    }
 
-        // Mark as read if it's not already
+    // ✅ NOUVEAU : Bouton play DIALOG : Lit la version VERBATIM (complète avec date)
+    fun readNotificationVerbatim(notification: Notification) {
+        ttsService.manuallySpeak(notification)  // Version complète
+
         if (!notification.isRead) {
             viewModelScope.launch {
                 notificationRepository.markAsRead(notification.id, true)
