@@ -313,10 +313,11 @@ class TTSService @Inject constructor(
 
         markAsSpoken(notification.id)
 
+        // ✅ AUTO-READ : Version simplifiée (montant seul)
         if (ttsLanguage == "wo" && useWolofRecordings && isRecognizedPattern) {
-            playWolofNotification(notification)
+            playWolofNotificationSimplified(notification)  // ← NOUVELLE FONCTION
         } else if (isRecognizedPattern) {
-            val textToSpeak = prepareTextToSpeak(notification)
+            val textToSpeak = prepareSimplifiedTextToSpeak(notification)  // ← NOUVELLE FONCTION
             tts?.speak(textToSpeak, TextToSpeech.QUEUE_ADD, null, "notification_${notification.id}")
         } else {
             Log.d("KUFAY_TTS", "Skipping auto-read for unrecognized pattern")
@@ -497,10 +498,13 @@ class TTSService @Inject constructor(
                     ?.replace(".", "")?.replace(",", "") ?: notification.amount?.toLong()
                     ?.toString() ?: ""
 
+                // ✅ CORRECTION : Extraire username APRÈS le montant
                 val usernameRegex =
-                    """[dD]e\s+([^(]*)(?:\(|\s+le)""".toRegex(RegexOption.IGNORE_CASE)
-                var username =
-                    usernameRegex.find(notification.text)?.groupValues?.getOrNull(1)?.trim() ?: ""
+                    """de\s+\d+(?:[.,]\d+)?(?:F|FCFA)?\s+de\s+([^(]*)(?:\(|\s+le)""".toRegex(RegexOption.IGNORE_CASE)
+                //      ^^^^^^^^^^^^^^^^^^^^^^^^^^^      ^^^^
+                //      Ignorer le montant + "F"         Puis capturer après "de "
+
+                var username = usernameRegex.find(notification.text)?.groupValues?.getOrNull(1)?.trim() ?: ""
 
                 if (username.contains("*")) {
                     username = formatUsername(username)
@@ -717,6 +721,165 @@ class TTSService @Inject constructor(
         }
     }
 
+    // ✅ NOUVELLE FONCTION : Version simplifiée pour auto-read
+    private fun playWolofNotificationSimplified(notification: Notification) {
+        when {
+            // ===== WAVE PERSONAL - TRANSFER RECEIVED =====
+            notification.packageName == "com.wave.personal" &&
+                    (notification.title.contains("Transfert reçu", ignoreCase = true) ||
+                            notification.title.contains("Transfer received", ignoreCase = true)) -> {
+
+                val amount = extractAmountOnly(notification)
+                playWolofRecordingWithText("wave_personal_received", "$amount Francs CFA")
+            }
+
+            // ===== WAVE PERSONAL - TRANSFER SENT =====
+            notification.packageName == "com.wave.personal" &&
+                    (notification.title.contains("Transfert réussi", ignoreCase = true) ||
+                            notification.title.contains("Transfert envoyé", ignoreCase = true) ||
+                            notification.title.contains("Transfer sent", ignoreCase = true)) -> {
+
+                val amount = extractAmountOnly(notification)
+                playWolofRecordingWithText("wave_personal_sent", "$amount Francs CFA")
+            }
+
+            // ===== WAVE PERSONAL - PAYMENT MADE =====
+            notification.packageName == "com.wave.personal" &&
+                    (notification.title.contains("Paiement réussi", ignoreCase = true) ||
+                            notification.title.contains("Payment successful", ignoreCase = true)) -> {
+
+                val amount = extractAmountOnly(notification)
+                playWolofRecordingWithText("wave_personal_payment", "$amount Francs CFA")
+            }
+
+            // ===== WAVE BUSINESS - PAYMENT RECEIVED =====
+            notification.packageName == "com.wave.business" &&
+                    notification.title.contains("Paiement réussi", ignoreCase = true) -> {
+
+                val amount = extractAmountOnly(notification)
+                playWolofRecordingWithText("wave_business_payment", "$amount Francs CFA")
+            }
+
+            // ===== WAVE BUSINESS - ENCAISSEMENT (Zéro frais) =====
+            notification.packageName == "com.wave.business" &&
+                    notification.title.contains("Zéro frais", ignoreCase = true) -> {
+
+                val amount = extractAmountOnly(notification)
+                playWolofRecordingWithText("wave_business_encaissement", "$amount Francs CFA")
+            }
+
+            // ===== WAVE BUSINESS - DISTANCE =====
+            notification.packageName == "com.wave.business" &&
+                    (notification.text.contains("À DISTANCE reçu", ignoreCase = true) ||
+                            notification.text.contains("A DISTANCE reçu", ignoreCase = true)) -> {
+
+                val amount = extractAmountOnly(notification)
+                playWolofRecordingWithText("wave_business_distance", "$amount Francs CFA")
+            }
+
+            // ===== ORANGE MONEY - RECEIVED =====
+            notification.packageName == "com.google.android.apps.messaging" &&
+                    notification.title.contains("OrangeMoney", ignoreCase = true) &&
+                    (notification.text.contains("Vous avez recu", ignoreCase = true) ||
+                            notification.text.contains("Vous avez reçu", ignoreCase = true)) -> {
+
+                val amount = extractAmountOnly(notification)
+                playWolofRecordingWithText("orange_money_received", "$amount Francs CFA")
+            }
+
+            // ===== ORANGE MONEY - SENT =====
+            notification.packageName == "com.google.android.apps.messaging" &&
+                    notification.title.contains("OrangeMoney", ignoreCase = true) &&
+                    notification.text.contains("Votre transfert", ignoreCase = true) -> {
+
+                val amount = extractAmountOnly(notification)
+                playWolofRecordingWithText("orange_money_sent", "$amount Francs CFA")
+            }
+
+            // ===== ORANGE MONEY - PAYMENT =====
+            notification.packageName == "com.google.android.apps.messaging" &&
+                    notification.title.contains("OrangeMoney", ignoreCase = true) &&
+                    notification.text.contains("Votre operation", ignoreCase = true) -> {
+
+                val amount = extractAmountOnly(notification)
+                playWolofRecordingWithText("orange_money_payment", "$amount Francs CFA")
+            }
+
+            // ===== MIXX - RECEIVED =====
+            notification.packageName == "com.google.android.apps.messaging" &&
+                    notification.title.contains("Mixx by Yas", ignoreCase = true) &&
+                    (notification.text.contains("recu", ignoreCase = true) ||
+                            notification.text.contains("reçu", ignoreCase = true)) -> {
+
+                val amount = extractAmountOnly(notification)
+                playWolofRecordingWithText("mixx_received", "$amount Francs CFA")
+            }
+
+            // ===== MIXX - SENT =====
+            notification.packageName == "com.google.android.apps.messaging" &&
+                    notification.title.contains("Mixx by Yas", ignoreCase = true) &&
+                    notification.text.contains("envoy", ignoreCase = true) -> {
+
+                val amount = extractAmountOnly(notification)
+                playWolofRecordingWithText("mixx_sent", "$amount Francs CFA")
+            }
+
+            // ===== FALLBACK =====
+            else -> {
+                val textToSpeak = prepareSimplifiedTextToSpeak(notification)
+                tts?.speak(textToSpeak, TextToSpeech.QUEUE_ADD, null, "notification_${notification.id}")
+            }
+        }
+    }
+
+    // ✅ HELPER : Extraire seulement le montant
+    private fun extractAmountOnly(notification: Notification): String {
+        val text = notification.text
+
+        // Wave Personal/Business patterns
+        val wavePatterns = listOf(
+            """You received\s+(\d+(?:,\d+)?(?:\.\d+)?)\s*F""".toRegex(RegexOption.IGNORE_CASE),
+            """You sent\s+(\d+(?:,\d+)?(?:\.\d+)?)\s*F""".toRegex(RegexOption.IGNORE_CASE),
+            """You have paid\s+(\d+(?:,\d+)?(?:\.\d+)?)\s*F""".toRegex(RegexOption.IGNORE_CASE),
+            """Vous avez reçu\s+(\d+(?:\.\d+)?F)""".toRegex(),
+            """Vous avez envoyé\s+(\d+(?:\.\d+)?F)""".toRegex(),
+            """Vous avez payé\s+(\d+(?:\.\d+)?F)""".toRegex(),
+            """a payé\s+(\d+(?:[.,]\d+)?(?:F|))""".toRegex(RegexOption.IGNORE_CASE),
+            """sur votre encaissement de\s+(\d+(?:[.,]\d+)?)""".toRegex(RegexOption.IGNORE_CASE)
+        )
+
+        for (pattern in wavePatterns) {
+            pattern.find(text)?.let {
+                return it.groupValues[1].replace(",", "").replace("F", "").replace(".", "")
+            }
+        }
+
+        // Orange Money/Mixx patterns
+        val smsPatterns = listOf(
+            """recu un transfert de (\d+)(?:\.\d+)?(?:FCFA|F)""".toRegex(RegexOption.IGNORE_CASE),
+            """(\d+)(?:\.\d+)?(?:Fcfa|FCFA|F)""".toRegex(RegexOption.IGNORE_CASE)
+        )
+
+        for (pattern in smsPatterns) {
+            pattern.find(text)?.let {
+                return it.groupValues[1].replace(",", "").replace(".", "")
+            }
+        }
+
+        // Fallback: use notification.amount
+        return notification.amount?.toLong()?.toString() ?: ""
+    }
+
+    // ✅ HELPER : Préparer texte simplifié (français TTS)
+    private fun prepareSimplifiedTextToSpeak(notification: Notification): String {
+        val amount = extractAmountOnly(notification)
+        return if (amount.isNotEmpty()) {
+            "$amount Francs CFA"
+        } else {
+            notification.amount?.toLong()?.toString()?.let { "$it Francs CFA" } ?: ""
+        }
+    }
+
     private fun playWolofRecordingWithText(recordingKey: String, dynamicText: String) {
         try {
             val resourceId = WOLOF_RECORDINGS[recordingKey]
@@ -726,6 +889,12 @@ class TTSService @Inject constructor(
                 return
             }
 
+            // ✅ LOGS DE DÉMARRAGE
+            Log.e("KUFAY_TTS", "🎯 playWolofRecordingWithText")
+            Log.e("KUFAY_TTS", "   Recording: $recordingKey")
+            Log.e("KUFAY_TTS", "   Dynamic text: '$dynamicText'")
+            Log.e("KUFAY_TTS", "   TTS Language: ${prefs.getString("tts_language", "fr")}")
+
             Log.d("KUFAY_TTS", "Playing Wolof recording with ID: $resourceId")
 
             try {
@@ -733,6 +902,10 @@ class TTSService @Inject constructor(
                 if (mediaPlayer != null) {
                     mediaPlayer.setOnCompletionListener {
                         it.release()
+
+                        // ✅ LOG APRÈS MP3 (IMPORTANT !)
+                        Log.e("KUFAY_TTS", "🔊 MP3 finished, now speaking: '$dynamicText'")
+
                         tts?.speak(dynamicText, TextToSpeech.QUEUE_ADD, null, "dynamic_${System.currentTimeMillis()}")
                     }
 
@@ -750,7 +923,6 @@ class TTSService @Inject constructor(
             tts?.speak(dynamicText, TextToSpeech.QUEUE_ADD, null, "exception_fallback")
         }
     }
-
     fun stop() {
         tts?.stop()
     }
