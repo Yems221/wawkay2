@@ -71,6 +71,7 @@ import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.material.icons.filled.RestoreFromTrash
 
 // Dashboard Hero Section that displays at the top of the home screen
 // Dashboard Hero Section that displays at the top of the home screen
@@ -562,7 +563,7 @@ fun HomeScreen(
                         }
 
                         IconButton(onClick = onNavigateToTrash) {
-                            Icon(Icons.Default.Delete, contentDescription = "Trash")
+                            Icon(Icons.Default.RestoreFromTrash, contentDescription = "Corbeille")
                         }
                         IconButton(onClick = {
                             coroutineScope.launch {
@@ -703,22 +704,20 @@ fun HomeScreen(
                     }
                 }
 
-                // ✨ Hauteur FIXE de l'espace pub (ne change jamais)
-                val adSpaceHeight = 75.dp
+
 
                 // Banner Ad - descend avec le header
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = headerHeight)  // ✅ Suit le header (dashboard + filtres)
-                        .height(adSpaceHeight)  // ✅ Hauteur FIXE du Box pub
+                        .padding(top = headerHeight)
+                        .wrapContentHeight()  // ✅ S'adapte au contenu
                         .zIndex(0.9f)
                 ) {
                     BannerAd(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(Color(0xFFF5F5F5))
-                            .height(75.dp)  // Hauteur réelle de la pub
                     )
                 }
 
@@ -727,8 +726,8 @@ fun HomeScreen(
                     state = scrollState,
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(top = headerHeight + adSpaceHeight),  // ✅ Header + espace pub
-                    contentPadding = PaddingValues(top = 6.dp, bottom = 6.dp, start = 8.dp, end = 8.dp)
+                        .padding(top = headerHeight),  // ✅ Header + espace pub
+                    contentPadding = PaddingValues(top = 16.dp, bottom = 6.dp, start = 8.dp, end = 8.dp)
                 ) {
                     // If no notifications, show empty state
                     if (notifications.isEmpty()) {
@@ -750,7 +749,7 @@ fun HomeScreen(
                                         modifier = Modifier.size(64.dp),
                                         tint = Color.LightGray
                                     )
-                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Spacer(modifier = Modifier.height(2.dp))
                                     Text(
                                         text = "Aucune notification n'a été trouvée",
                                         style = MaterialTheme.typography.bodyLarge,
@@ -849,9 +848,11 @@ fun HomeScreen(
             }
 
             // Date Picker Dialog for single day - FIXED: Moved outside scrollable content
+            // Date Picker Dialog for single day - FIXED: Utilise le même calendrier que Date Range
             if (showDatePicker.value) {
                 Box(modifier = Modifier.fillMaxSize().zIndex(10f)) {
-                    SimpleDatePickerDialog(
+                    MiniCalendarDialog(  // ✅ NOUVEAU : Même calendrier que "Période"
+                        initialDate = selectedDate ?: Calendar.getInstance().timeInMillis,
                         onDismiss = { showDatePicker.value = false },
                         onDateSelected = { date ->
                             viewModel.setSelectedDate(date)
@@ -871,157 +872,6 @@ fun HomeScreen(
                             showDateRangePicker.value = false
                         }
                     )
-                }
-            }
-        }
-    }
-}
-
-// Simple date picker dialog
-@Composable
-fun SimpleDatePickerDialog(
-    onDismiss: () -> Unit,
-    onDateSelected: (Long) -> Unit
-) {
-    val calendar = remember { Calendar.getInstance() }
-    var year by remember { mutableStateOf(calendar.get(Calendar.YEAR)) }
-    var month by remember { mutableStateOf(calendar.get(Calendar.MONTH)) }
-    var day by remember { mutableStateOf(calendar.get(Calendar.DAY_OF_MONTH)) }
-
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = Color.White
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth()
-            ) {
-                Text(
-                    "Sélectionner une date",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                // More compact date picker
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    // Day
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("Jour", style = MaterialTheme.typography.bodySmall)
-                        IconButton(onClick = {
-                            if (day > 1) day-- else {
-                                // Move to previous month
-                                if (month > 0) month-- else {
-                                    month = 11
-                                    year--
-                                }
-                                // Set day to last day of the month
-                                calendar.set(year, month, 1)
-                                day = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
-                            }
-                        }) {
-                            Icon(Icons.Default.Remove, contentDescription = "Previous Day")
-                        }
-                        Text(day.toString(), style = MaterialTheme.typography.titleMedium)
-                        IconButton(onClick = {
-                            // Calculate max days in current month
-                            calendar.set(year, month, 1)
-                            val maxDay = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
-
-                            if (day < maxDay) day++ else {
-                                day = 1
-                                if (month < 11) month++ else {
-                                    month = 0
-                                    year++
-                                }
-                            }
-                        }) {
-                            Icon(Icons.Default.Add, contentDescription = "Next Day")
-                        }
-                    }
-
-                    // Month
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("Mois", style = MaterialTheme.typography.bodySmall)
-                        IconButton(onClick = {
-                            if (month > 0) month-- else {
-                                month = 11
-                                year--
-                            }
-                        }) {
-                            Icon(Icons.Default.Remove, contentDescription = "Previous Month")
-                        }
-                        Text(
-                            getMonthName(month).substring(0, 3),
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        IconButton(onClick = {
-                            if (month < 11) month++ else {
-                                month = 0
-                                year++
-                            }
-                        }) {
-                            Icon(Icons.Default.Add, contentDescription = "Next Month")
-                        }
-                    }
-
-                    // Year
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("Année", style = MaterialTheme.typography.bodySmall)
-                        IconButton(onClick = { year-- }) {
-                            Icon(Icons.Default.Remove, contentDescription = "Previous Year")
-                        }
-                        Text(year.toString(), style = MaterialTheme.typography.titleMedium)
-                        IconButton(onClick = { year++ }) {
-                            Icon(Icons.Default.Add, contentDescription = "Next Year")
-                        }
-                    }
-                }
-
-                // Show selected date
-                val dateFormat = SimpleDateFormat("EEEE d MMMM yyyy", Locale.FRANCE)
-                calendar.set(year, month, day)
-                Text(
-                    dateFormat.format(calendar.time),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .padding(vertical = 8.dp)
-                )
-
-                // Buttons
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Annuler")
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(
-                        onClick = {
-                            calendar.set(year, month, day)
-                            onDateSelected(calendar.timeInMillis)
-                        }
-                    ) {
-                        Text("OK")
-                    }
                 }
             }
         }
