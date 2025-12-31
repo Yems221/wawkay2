@@ -64,8 +64,11 @@ class KufayNotificationManager @Inject constructor(
         // Déterminer la couleur selon l'app
         val appColor = getAppColor(notification.appTag)
 
-        // Créer l'icône avec la pastille de couleur
-        val largeIcon = createColoredIcon(appColor, notification.isIncomingTransaction)
+        // ✅ CORRECTION : Déterminer le type de transaction
+        val transactionType = determineTransactionType(notification)
+
+        // ✅ CORRECTION : Créer l'icône avec le bon symbole
+        val largeIcon = createColoredIcon(appColor, transactionType)
 
         // Intent pour ouvrir l'app
         val contentIntent = Intent(context, MainActivity::class.java).apply {
@@ -91,12 +94,11 @@ class KufayNotificationManager @Inject constructor(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Construire le titre avec indicateur visuel
-        val titlePrefix = if (notification.isIncomingTransaction) "↓ " else ""
-        val title = "$titlePrefix${getAppDisplayName(notification.appTag)}"
+        // ✅ CORRECTION : Utiliser transactionLabel pour le titre
+        val title = notification.transactionLabel ?: getAppDisplayName(notification.appTag)
 
-        // Construire le message
-        val message = buildNotificationMessage(notification)
+        // ✅ CORRECTION : Construire le message avec le bon texte
+        val message = buildNotificationMessage(notification, transactionType)
 
         // Créer la notification
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
@@ -127,9 +129,35 @@ class KufayNotificationManager @Inject constructor(
     }
 
     /**
-     * Crée une icône circulaire avec la couleur de l'app et une flèche si entrante
+     * ✅ NOUVELLE FONCTION : Détermine le type de transaction
      */
-    private fun createColoredIcon(colorHex: String, isIncoming: Boolean): Bitmap {
+    private fun determineTransactionType(notification: KufayNotification): TransactionType {
+        return when {
+            // Transaction REÇUE
+            notification.isIncomingTransaction -> TransactionType.INCOMING
+
+            // PAIEMENT (basé sur transactionLabel)
+            notification.transactionLabel?.contains("Paiement", ignoreCase = true) == true ||
+                    notification.transactionLabel?.contains("Payment", ignoreCase = true) == true -> TransactionType.PAYMENT
+
+            // TRANSFERT ENVOYÉ (par défaut si pas reçu et pas paiement)
+            else -> TransactionType.OUTGOING
+        }
+    }
+
+    /**
+     * ✅ NOUVELLE ENUM : Types de transaction
+     */
+    private enum class TransactionType {
+        INCOMING,   // Transfert reçu ↓
+        OUTGOING,   // Transfert envoyé ↑
+        PAYMENT     // Paiement 💰
+    }
+
+    /**
+     * ✅ CORRECTION : Crée une icône circulaire avec le bon symbole
+     */
+    private fun createColoredIcon(colorHex: String, transactionType: TransactionType): Bitmap {
         val size = 128
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
@@ -150,37 +178,75 @@ class KufayNotificationManager @Inject constructor(
         }
         canvas.drawCircle(size / 2f, size / 2f, size / 2.2f, paint)
 
-        // Si transaction entrante, dessiner une flèche verte descendante
-        if (isIncoming) {
-            val arrowPaint = Paint().apply {
-                isAntiAlias = true
-                color = Color.parseColor("#4CAF50") // Vert
-                style = Paint.Style.FILL
-                strokeWidth = 6f
+        // ✅ CORRECTION : Dessiner le symbole selon le type de transaction
+        val symbolPaint = Paint().apply {
+            isAntiAlias = true
+            color = Color.WHITE  // Symboles en BLANC
+            style = Paint.Style.FILL
+            strokeWidth = 6f
+        }
+
+        val centerX = size / 2f
+        val centerY = size / 2f
+        val arrowLength = size / 3f
+
+        when (transactionType) {
+            TransactionType.INCOMING -> {
+                // ✅ Flèche descendante blanche ↓
+                // Ligne verticale
+                canvas.drawLine(
+                    centerX,
+                    centerY - arrowLength / 2,
+                    centerX,
+                    centerY + arrowLength / 2,
+                    symbolPaint
+                )
+
+                // Triangle (pointe vers le bas)
+                val path = android.graphics.Path().apply {
+                    moveTo(centerX, centerY + arrowLength / 2) // Pointe
+                    lineTo(centerX - 10, centerY + arrowLength / 2 - 15) // Gauche
+                    lineTo(centerX + 10, centerY + arrowLength / 2 - 15) // Droite
+                    close()
+                }
+                canvas.drawPath(path, symbolPaint)
             }
 
-            // Dessiner flèche ↓ (ligne + triangle)
-            val centerX = size / 2f
-            val centerY = size / 2f
-            val arrowLength = size / 3f
+            TransactionType.OUTGOING -> {
+                // ✅ Flèche montante blanche ↑
+                // Ligne verticale
+                canvas.drawLine(
+                    centerX,
+                    centerY - arrowLength / 2,
+                    centerX,
+                    centerY + arrowLength / 2,
+                    symbolPaint
+                )
 
-            // Ligne verticale
-            canvas.drawLine(
-                centerX,
-                centerY - arrowLength / 2,
-                centerX,
-                centerY + arrowLength / 2,
-                arrowPaint
-            )
-
-            // Triangle (pointe vers le bas)
-            val path = android.graphics.Path().apply {
-                moveTo(centerX, centerY + arrowLength / 2) // Pointe
-                lineTo(centerX - 10, centerY + arrowLength / 2 - 15) // Gauche
-                lineTo(centerX + 10, centerY + arrowLength / 2 - 15) // Droite
-                close()
+                // Triangle (pointe vers le haut)
+                val path = android.graphics.Path().apply {
+                    moveTo(centerX, centerY - arrowLength / 2) // Pointe en haut
+                    lineTo(centerX - 10, centerY - arrowLength / 2 + 15) // Gauche
+                    lineTo(centerX + 10, centerY - arrowLength / 2 + 15) // Droite
+                    close()
+                }
+                canvas.drawPath(path, symbolPaint)
             }
-            canvas.drawPath(path, arrowPaint)
+
+            TransactionType.PAYMENT -> {
+                // ✅ Symbole argent blanc 💰 (cercle avec "F" stylisé)
+                symbolPaint.textSize = size / 2.5f
+                symbolPaint.textAlign = Paint.Align.CENTER
+                symbolPaint.isFakeBoldText = true
+
+                // Dessiner "F" pour Francs CFA
+                canvas.drawText(
+                    "F",
+                    centerX,
+                    centerY + (symbolPaint.textSize / 3),
+                    symbolPaint
+                )
+            }
         }
 
         return bitmap
@@ -213,23 +279,27 @@ class KufayNotificationManager @Inject constructor(
     }
 
     /**
-     * Construit le message de la notification
+     * ✅ CORRECTION : Construit le message avec le bon label
      */
-    private fun buildNotificationMessage(notification: KufayNotification): String {
+    private fun buildNotificationMessage(notification: KufayNotification, transactionType: TransactionType): String {
         val amount = notification.amount?.let {
             String.format("%,.0f", it)
         } ?: notification.amountText ?: "N/A"
 
         val currency = notification.currency ?: "F"
 
-        return when {
-            notification.isIncomingTransaction -> {
+        return when (transactionType) {
+            TransactionType.INCOMING -> {
                 val from = notification.label?.let { " de $it" } ?: ""
                 "✅ Reçu : $amount $currency$from"
             }
-            else -> {
+            TransactionType.OUTGOING -> {
                 val to = notification.label?.let { " à $it" } ?: ""
-                "💸 Envoyé : $amount $currency$to"
+                "↗️ Envoyé : $amount $currency$to"
+            }
+            TransactionType.PAYMENT -> {
+                val to = notification.label?.let { " à $it" } ?: ""
+                "💳 Payé : $amount $currency$to"
             }
         }
     }
