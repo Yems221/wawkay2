@@ -1330,7 +1330,11 @@ class TTSService @Inject constructor(
             builder.append(cleanedText)
         }
 
-        return builder.toString()
+        // ✅ Ajouter la date formatée à la fin
+        val formattedDate = formatDateForSpeech(notification.timestamp)
+        val finalText = builder.toString() + " $formattedDate"
+
+        return finalText
     }
 
     private fun formatUsername(username: String): String {
@@ -1393,6 +1397,40 @@ class TTSService @Inject constructor(
         }
 
         return username
+    }
+
+    /**
+     * ✅ NOUVEAU : Formatte la date en français parlé naturel
+     * Exemple : "le 31 décembre 2025 à 9h33" au lieu de "le 2025 à 12 mois 31...9h33"
+     */
+    private fun formatDateForSpeech(timestamp: Long): String {
+        val calendar = Calendar.getInstance().apply {
+            timeInMillis = timestamp
+        }
+
+        val day = calendar.get(Calendar.DAY_OF_MONTH)
+        val month = when (calendar.get(Calendar.MONTH)) {
+            0 -> "janvier"
+            1 -> "février"
+            2 -> "mars"
+            3 -> "avril"
+            4 -> "mai"
+            5 -> "juin"
+            6 -> "juillet"
+            7 -> "août"
+            8 -> "septembre"
+            9 -> "octobre"
+            10 -> "novembre"
+            11 -> "décembre"
+            else -> ""
+        }
+        val year = calendar.get(Calendar.YEAR)
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+        val minute = calendar.get(Calendar.MINUTE)
+
+        // Format : "le 31 décembre 2025 à 9h33"
+        val minuteStr = if (minute < 10) "0$minute" else "$minute"
+        return "le $day $month $year à ${hour}h$minuteStr"
     }
 
     private fun extractRecipient(text: String): String {
