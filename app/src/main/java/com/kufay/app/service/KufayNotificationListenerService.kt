@@ -79,7 +79,7 @@ class KufayNotificationListenerService : NotificationListenerService() {
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Kufay est actif")
+            .setContentTitle("Kufay est actif sur votre téléphone.")
             .setContentText("Écoute des notifications financières...")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setOngoing(true)
@@ -159,6 +159,12 @@ class KufayNotificationListenerService : NotificationListenerService() {
         val (amount, currency, labelPair) = notificationUtils.extractFinancialData(packageName, title, text)
         val (amountText, label) = labelPair
 
+        // 2️⃣ ✅ ICI : FILTRE IMMÉDIATEMENT APRÈS L'EXTRACTION
+        if (amount == null || amount == 0.0) {
+            Log.d("KUFAY_SERVICE", "⛔ Notification sans montant ignorée: $title")
+            return  // Stop tout le traitement, ne continue pas
+        }
+
         // ✅ MODIFICATION: Détection transactions entrantes (FRANÇAIS + ANGLAIS)
         val isIncomingTransaction = when {
             // WAVE PERSONAL - FRANÇAIS
@@ -198,6 +204,14 @@ class KufayNotificationListenerService : NotificationListenerService() {
             else -> null
         }
 
+        // ✅ Calculer le transactionLabel
+        val transactionLabel = notificationUtils.determineTransactionLabel(
+            packageName = packageName,
+            title = title,
+            text = text,
+            isIncomingTransaction = isIncomingTransaction
+        )
+
         val kufayNotification = KufayNotification(
             packageName = packageName,
             appName = appName,
@@ -209,7 +223,9 @@ class KufayNotificationListenerService : NotificationListenerService() {
             currency = currency,
             label = label,
             isIncomingTransaction = isIncomingTransaction,
-            appTag = appTag
+            appTag = appTag,
+            transactionLabel = transactionLabel
+
         )
 
         serviceScope.launch {
