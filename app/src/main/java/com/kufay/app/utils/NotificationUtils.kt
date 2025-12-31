@@ -467,4 +467,38 @@ class NotificationUtils @Inject constructor(
 
         return false
     }
+
+    /**
+     * Détermine le label de transaction basé sur la logique existante de NotificationCard
+     */
+    fun determineTransactionLabel(
+        packageName: String,
+        title: String,
+        text: String,
+        isIncomingTransaction: Boolean
+    ): String {
+        return when {
+            // PRIORITÉ 1 : Transactions REÇUES (tous les apps)
+            isIncomingTransaction -> "Transfert reçu"
+
+            // PRIORITÉ 2 : TRANSFERT ENVOYÉ (Orange Money & Mixx via SMS)
+            packageName == "com.google.android.apps.messaging" &&
+                    text.contains("transfert", ignoreCase = true) &&
+                    text.contains("vers", ignoreCase = true) -> "Transfert envoyé"
+
+            packageName == "com.google.android.apps.messaging" &&
+                    text.contains("envoyé", ignoreCase = true) -> "Transfert envoyé"
+
+            // PRIORITÉ 3 : PAIEMENT (Orange Money)
+            packageName == "com.google.android.apps.messaging" &&
+                    text.contains("operation", ignoreCase = true) -> "Paiement effectué"
+
+            // PRIORITÉ 4 : PAIEMENT (Wave Personal)
+            title.contains("Paiement réussi", ignoreCase = true) ||
+                    title.contains("Payment successful", ignoreCase = true) -> "Paiement effectué"
+
+            // FALLBACK : Titre original
+            else -> title
+        }
+    }
 }
