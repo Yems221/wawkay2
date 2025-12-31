@@ -134,6 +134,20 @@ class KufayNotificationListenerService : NotificationListenerService() {
                 Log.d("KUFAY_SERVICE", "Skipping phone credit notification: $title")
                 return
             }
+
+            // ✅ NOUVEAU : Ignorer les messages de consultation de solde Orange Money
+            if (title.contains("OrangeMoney", ignoreCase = true) &&
+                text.startsWith("Le solde de votre compte Orange Money est de", ignoreCase = true)) {
+                Log.d("KUFAY_SERVICE", "Skipping Orange Money balance check notification")
+                return
+            }
+
+            // ✅ NOUVEAU : Ignorer les messages de consultation de solde Mixx by Yas
+            if (title.contains("Mixx by Yas", ignoreCase = true) &&
+                text.startsWith("Le solde de votre compte Mixx", ignoreCase = true)) {
+                Log.d("KUFAY_SERVICE", "Skipping Mixx balance check notification")
+                return
+            }
         }
 
         processNotification(sbn)
