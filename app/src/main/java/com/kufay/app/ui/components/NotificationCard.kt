@@ -152,32 +152,7 @@ fun NotificationCard(
 
             // Title row
             // With this modified title logic that handles Orange Money and Mixx by Yas correctly:
-            val dynamicTitle = when {
-                // For incoming transactions from Orange Money and Mixx by Yas
-                notification.packageName == "com.google.android.apps.messaging" &&
-                        (notification.title.contains("OrangeMoney", ignoreCase = true) ||
-                                notification.title.contains("Mixx by Yas", ignoreCase = true)) &&
-                        notification.isIncomingTransaction -> "Transfert reçu"
-
-                // For outgoing transfers from Orange Money - look for "transfert" and "vers"
-                notification.packageName == "com.google.android.apps.messaging" &&
-                        notification.title.contains("OrangeMoney", ignoreCase = true) &&
-                        notification.text.contains("transfert", ignoreCase = true) &&
-                        notification.text.contains("vers", ignoreCase = true) -> "Transfert envoyé"
-
-                // For Mixx by Yas outgoing transfers - keep original condition
-                notification.packageName == "com.google.android.apps.messaging" &&
-                        notification.title.contains("Mixx by Yas", ignoreCase = true) &&
-                        notification.text.contains("envoyé", ignoreCase = true) -> "Transfert envoyé"
-
-                // For Orange Money payment operations
-                notification.packageName == "com.google.android.apps.messaging" &&
-                        notification.title.contains("OrangeMoney", ignoreCase = true) &&
-                        notification.text.contains("operation", ignoreCase = true) -> "Paiement effectué"
-
-                // Default fallback to original title
-                else -> notification.title
-            }
+            val dynamicTitle = notification.transactionLabel ?: notification.title
 
             Text(
                 text = dynamicTitle,
