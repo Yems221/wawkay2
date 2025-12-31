@@ -315,9 +315,9 @@ class TTSService @Inject constructor(
 
         // ✅ AUTO-READ : Version simplifiée (montant seul)
         if (ttsLanguage == "wo" && useWolofRecordings && isRecognizedPattern) {
-            playWolofNotificationSimplified(notification)  // ← NOUVELLE FONCTION
+            playWolofNotificationSimplified(notification)
         } else if (isRecognizedPattern) {
-            val textToSpeak = prepareSimplifiedTextToSpeak(notification)  // ← NOUVELLE FONCTION
+            val textToSpeak = prepareSimplifiedTextToSpeak(notification)
             tts?.speak(textToSpeak, TextToSpeech.QUEUE_ADD, null, "notification_${notification.id}")
         } else {
             Log.d("KUFAY_TTS", "Skipping auto-read for unrecognized pattern")
@@ -398,7 +398,8 @@ class TTSService @Inject constructor(
                     }
                 }
 
-                playWolofRecordingWithText("wave_personal_received", "$amount Francs CFA de $sender")
+                val formattedDate = formatDateForSpeech(notification.timestamp)
+                playWolofRecordingWithText("wave_personal_received", "$amount Francs CFA de $sender $formattedDate")
             }
 
             // ===== WAVE PERSONAL - TRANSFER SENT =====
@@ -442,9 +443,10 @@ class TTSService @Inject constructor(
 
                 recipient = recipient ?: ""
 
+                val formattedDate = formatDateForSpeech(notification.timestamp)
                 playWolofRecordingWithText(
                     "wave_personal_sent",
-                    "$amount Francs CFA ${if (recipient.isNotEmpty()) recipient else ""}"
+                    "$amount Francs CFA ${if (recipient.isNotEmpty()) recipient else ""} $formattedDate"
                 )
             }
 
@@ -467,7 +469,8 @@ class TTSService @Inject constructor(
                     amount = notification.amount?.toLong()?.toString() ?: ""
                 }
 
-                playWolofRecordingWithText("wave_personal_payment", "$amount Francs CFA")
+                val formattedDate = formatDateForSpeech(notification.timestamp)
+                playWolofRecordingWithText("wave_personal_payment", "$amount Francs CFA $formattedDate")
             }
 
             // ===== WAVE BUSINESS NOTIFICATIONS =====
@@ -487,7 +490,8 @@ class TTSService @Inject constructor(
                     username = formatUsername(username)
                 }
 
-                playWolofRecordingWithText("wave_business_payment", "$amount Francs CFA de $username")
+                val formattedDate = formatDateForSpeech(notification.timestamp)
+                playWolofRecordingWithText("wave_business_payment", "$amount Francs CFA de $username $formattedDate")
             }
 
             notification.packageName == "com.wave.business" &&
@@ -498,11 +502,8 @@ class TTSService @Inject constructor(
                     ?.replace(".", "")?.replace(",", "") ?: notification.amount?.toLong()
                     ?.toString() ?: ""
 
-                // ✅ CORRECTION : Extraire username APRÈS le montant
                 val usernameRegex =
                     """de\s+\d+(?:[.,]\d+)?(?:F|FCFA)?\s+de\s+([^(]*)(?:\(|\s+le)""".toRegex(RegexOption.IGNORE_CASE)
-                //      ^^^^^^^^^^^^^^^^^^^^^^^^^^^      ^^^^
-                //      Ignorer le montant + "F"         Puis capturer après "de "
 
                 var username = usernameRegex.find(notification.text)?.groupValues?.getOrNull(1)?.trim() ?: ""
 
@@ -510,9 +511,10 @@ class TTSService @Inject constructor(
                     username = formatUsername(username)
                 }
 
+                val formattedDate = formatDateForSpeech(notification.timestamp)
                 playWolofRecordingWithText(
                     "wave_business_encaissement",
-                    "$amount Francs CFA de $username"
+                    "$amount Francs CFA de $username $formattedDate"
                 )
             }
 
@@ -534,9 +536,10 @@ class TTSService @Inject constructor(
                     username = formatUsername(username)
                 }
 
+                val formattedDate = formatDateForSpeech(notification.timestamp)
                 playWolofRecordingWithText(
                     "wave_business_distance",
-                    "$amount Francs CFA de $username"
+                    "$amount Francs CFA de $username $formattedDate"
                 )
             }
 
@@ -569,7 +572,8 @@ class TTSService @Inject constructor(
                     }
                 } else ""
 
-                playWolofRecordingWithText("orange_money_sent", "$amount Francs CFA vers $recipient")
+                val formattedDate = formatDateForSpeech(notification.timestamp)
+                playWolofRecordingWithText("orange_money_sent", "$amount Francs CFA vers $recipient $formattedDate")
             }
 
             notification.packageName == "com.google.android.apps.messaging" &&
@@ -586,7 +590,8 @@ class TTSService @Inject constructor(
                 val amount = amountRegex.find(cleanedText)?.groupValues?.get(1)
                     ?: notification.amount?.toLong()?.toString() ?: ""
 
-                playWolofRecordingWithText("orange_money_payment", "$amount Francs CFA")
+                val formattedDate = formatDateForSpeech(notification.timestamp)
+                playWolofRecordingWithText("orange_money_payment", "$amount Francs CFA $formattedDate")
             }
 
             notification.packageName == "com.google.android.apps.messaging" &&
@@ -625,7 +630,8 @@ class TTSService @Inject constructor(
                     }
                 }
 
-                playWolofRecordingWithText("orange_money_received", "$amount Francs CFA de $username")
+                val formattedDate = formatDateForSpeech(notification.timestamp)
+                playWolofRecordingWithText("orange_money_received", "$amount Francs CFA de $username $formattedDate")
             }
 
             notification.packageName == "com.google.android.apps.messaging" &&
@@ -643,7 +649,8 @@ class TTSService @Inject constructor(
                 val amount = amountRegex.find(textToRead)?.groupValues?.get(1)
                     ?: notification.amount?.toLong()?.toString() ?: ""
 
-                playWolofRecordingWithText("orange_money_general", "$amount , Francs CFA")
+                val formattedDate = formatDateForSpeech(notification.timestamp)
+                playWolofRecordingWithText("orange_money_general", "$amount , Francs CFA $formattedDate")
             }
 
             notification.packageName == "com.google.android.apps.messaging" &&
@@ -675,7 +682,8 @@ class TTSService @Inject constructor(
                     ""
                 }
 
-                playWolofRecordingWithText("mixx_received", "$amount Francs CFA de $formattedSender")
+                val formattedDate = formatDateForSpeech(notification.timestamp)
+                playWolofRecordingWithText("mixx_received", "$amount Francs CFA de $formattedSender $formattedDate")
             }
 
             notification.packageName == "com.google.android.apps.messaging" &&
@@ -706,7 +714,8 @@ class TTSService @Inject constructor(
                     ""
                 }
 
-                playWolofRecordingWithText("mixx_sent", "$amount Francs CFA de $formattedRecipient")
+                val formattedDate = formatDateForSpeech(notification.timestamp)
+                playWolofRecordingWithText("mixx_sent", "$amount Francs CFA de $formattedRecipient $formattedDate")
             }
 
             else -> {
@@ -870,13 +879,28 @@ class TTSService @Inject constructor(
         return notification.amount?.toLong()?.toString() ?: ""
     }
 
-    // ✅ HELPER : Préparer texte simplifié (français TTS)
+    // ✅ CORRECTION : Version simplifiée avec appName + title + amount (PAS de date)
     private fun prepareSimplifiedTextToSpeak(notification: Notification): String {
+        val appName = when (notification.packageName) {
+            "com.wave.personal" -> "Wave"
+            "com.wave.business" -> "Wave Business"
+            "com.google.android.apps.messaging" -> {
+                when {
+                    notification.title.contains("OrangeMoney", ignoreCase = true) -> "Orange Money"
+                    notification.title.contains("Mixx by Yas", ignoreCase = true) -> "Mixx by Yasse"
+                    else -> notification.appName
+                }
+            }
+            else -> notification.appName
+        }
+
+        val title = notification.title
         val amount = extractAmountOnly(notification)
+
         return if (amount.isNotEmpty()) {
-            "$amount Francs CFA"
+            "$appName: $title. $amount Francs CFA"
         } else {
-            notification.amount?.toLong()?.toString()?.let { "$it Francs CFA" } ?: ""
+            "$appName: $title"
         }
     }
 
@@ -889,10 +913,14 @@ class TTSService @Inject constructor(
                 return
             }
 
-            // ✅ LOGS DE DÉMARRAGE
             Log.e("KUFAY_TTS", "🎯 playWolofRecordingWithText")
             Log.e("KUFAY_TTS", "   Recording: $recordingKey")
-            Log.e("KUFAY_TTS", "   Dynamic text: '$dynamicText'")
+            Log.e("KUFAY_TTS", "   Dynamic text BEFORE cleaning: '$dynamicText'")
+
+            // ✅ NETTOYER : Enlever les dates ISO du texte
+            val cleanedText = cleanNotificationText(dynamicText)
+
+            Log.e("KUFAY_TTS", "   Dynamic text AFTER cleaning: '$cleanedText'")
             Log.e("KUFAY_TTS", "   TTS Language: ${prefs.getString("tts_language", "fr")}")
 
             Log.d("KUFAY_TTS", "Playing Wolof recording with ID: $resourceId")
@@ -903,26 +931,27 @@ class TTSService @Inject constructor(
                     mediaPlayer.setOnCompletionListener {
                         it.release()
 
-                        // ✅ LOG APRÈS MP3 (IMPORTANT !)
-                        Log.e("KUFAY_TTS", "🔊 MP3 finished, now speaking: '$dynamicText'")
+                        Log.e("KUFAY_TTS", "🔊 MP3 finished, now speaking: '$cleanedText'")
 
-                        tts?.speak(dynamicText, TextToSpeech.QUEUE_ADD, null, "dynamic_${System.currentTimeMillis()}")
+                        // ✅ UTILISER cleanedText au lieu de dynamicText
+                        tts?.speak(cleanedText, TextToSpeech.QUEUE_ADD, null, "dynamic_${System.currentTimeMillis()}")
                     }
 
                     mediaPlayer.start()
                 } else {
                     Log.e("KUFAY_TTS", "Failed to create MediaPlayer for resource: $resourceId")
-                    tts?.speak(dynamicText, TextToSpeech.QUEUE_ADD, null, "dynamic_error_fallback")
+                    tts?.speak(cleanedText, TextToSpeech.QUEUE_ADD, null, "dynamic_error_fallback")
                 }
             } catch (e: Exception) {
                 Log.e("KUFAY_TTS", "Error playing Wolof recording: ${e.message}")
-                tts?.speak(dynamicText, TextToSpeech.QUEUE_ADD, null, "dynamic_error_fallback")
+                tts?.speak(cleanedText, TextToSpeech.QUEUE_ADD, null, "dynamic_error_fallback")
             }
         } catch (e: Exception) {
             Log.e("KUFAY_TTS", "Exception in playWolofRecordingWithText: ${e.message}")
             tts?.speak(dynamicText, TextToSpeech.QUEUE_ADD, null, "exception_fallback")
         }
     }
+
     fun stop() {
         tts?.stop()
     }
@@ -1330,9 +1359,12 @@ class TTSService @Inject constructor(
             builder.append(cleanedText)
         }
 
-        // ✅ Ajouter la date formatée à la fin
+// ✅ NETTOYER le builder (enlever la date ISO si présente dans le texte)
+        val cleanedBuilder = cleanNotificationText(builder.toString())
+
+// ✅ Ajouter la date formatée à la fin
         val formattedDate = formatDateForSpeech(notification.timestamp)
-        val finalText = builder.toString() + " $formattedDate"
+        val finalText = "$cleanedBuilder $formattedDate"
 
         return finalText
     }
@@ -1400,8 +1432,7 @@ class TTSService @Inject constructor(
     }
 
     /**
-     * ✅ NOUVEAU : Formatte la date en français parlé naturel
-     * Exemple : "le 31 décembre 2025 à 9h33" au lieu de "le 2025 à 12 mois 31...9h33"
+     * ✅ CORRECTION : Formatte la date en français parlé naturel
      */
     private fun formatDateForSpeech(timestamp: Long): String {
         val calendar = Calendar.getInstance().apply {
@@ -1428,9 +1459,17 @@ class TTSService @Inject constructor(
         val hour = calendar.get(Calendar.HOUR_OF_DAY)
         val minute = calendar.get(Calendar.MINUTE)
 
-        // Format : "le 31 décembre 2025 à 9h33"
-        val minuteStr = if (minute < 10) "0$minute" else "$minute"
-        return "le $day $month $year à ${hour}h$minuteStr"
+        // ✅ CORRECTION : Format phonétique pour TTS
+        val minuteStr = if (minute < 10) "zéro $minute" else "$minute"
+        return "le $day $month $year à $hour heures $minuteStr"
+    }
+    private fun cleanNotificationText(text: String): String {
+        // Enlever les timestamps ISO (2025-12-31 09:33, 2025-12-31T09:33, etc.)
+        return text
+            .replace(Regex("""\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}"""), "")
+            .replace(Regex("""\d{4}-\d{2}-\d{2}T\d{2}:\d{2}"""), "")
+            .replace(Regex("""le\s+\d{4}-\d{2}-\d{2}"""), "")
+            .trim()
     }
 
     private fun extractRecipient(text: String): String {
