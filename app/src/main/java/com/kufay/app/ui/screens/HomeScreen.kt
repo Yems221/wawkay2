@@ -74,7 +74,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.filled.RestoreFromTrash
 
 // Dashboard Hero Section that displays at the top of the home screen
-// Dashboard Hero Section that displays at the top of the home screen
 @Composable
 fun DashboardHero(
     modifier: Modifier = Modifier,
@@ -85,10 +84,10 @@ fun DashboardHero(
     onReadDailyTotal: () -> Unit,
     isCollapsed: Boolean = false,
     incomingTransactions: List<Pair<String, Double>> = emptyList(),
-    // ✨ NOUVEAUX paramètres pour SearchBar
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
-    notificationCount: Int
+    notificationCount: Int,
+    onExpandedChange: (Boolean) -> Unit = {}  // ✅ NOUVEAU callback
 ) {
     var isExpanded by remember { mutableStateOf(false) }
     var isAmountVisible by remember { mutableStateOf(false) }
@@ -96,7 +95,6 @@ fun DashboardHero(
 
     val actuallyExpanded = isExpanded && !isCollapsed
 
-    // ✨ Card Material Design
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -112,7 +110,10 @@ fun DashboardHero(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { isExpanded = !isExpanded }
+                .clickable {
+                    isExpanded = !isExpanded
+                    onExpandedChange(isExpanded)  // ✅ NOTIFIER le parent
+                }
                 .padding(16.dp)
         ) {
             // Title Row
@@ -201,22 +202,6 @@ fun DashboardHero(
                         )
                     }
 
-                    // Debug button - commenté pour usage futur
-                    /*
-                    if (!isCollapsed) {
-                        IconButton(
-                            onClick = { showDebugPopup = true },
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.BugReport,
-                                contentDescription = "Debug Amounts",
-                                tint = Color.White.copy(alpha = 0.7f)
-                            )
-                        }
-                    }
-                    */
-
                     IconButton(
                         onClick = { isAmountVisible = !isAmountVisible },
                         modifier = Modifier.size(if (isCollapsed) 24.dp else 28.dp)
@@ -230,7 +215,7 @@ fun DashboardHero(
                 }
             }
 
-            // ✨ NOUVEAU : SearchBar intégrée dans le Card (visible seulement si pas collapsed)
+            // SearchBar
             AnimatedVisibility(
                 visible = !isCollapsed,
                 enter = expandVertically() + fadeIn(),
@@ -406,8 +391,7 @@ fun DashboardHero(
     }
 }
 
-// Helper function to get app name from package name
-// Remove private keyword
+// Helper functions
 fun getAppNameFromPackage(packageName: String, title: String): String {
     return when {
         packageName == "com.wave.personal" -> "Wave"
@@ -415,12 +399,10 @@ fun getAppNameFromPackage(packageName: String, title: String): String {
         packageName == "com.google.android.apps.messaging" -> {
             when {
                 title.contains("OrangeMoney", ignoreCase = true) -> {
-                    // Extraire le type d'opération du titre
                     val operation = extractOperationType(title, "OrangeMoney")
                     "Orange Money - $operation"
                 }
                 title.contains("Mixx by Yas", ignoreCase = true) -> {
-                    // Extraire le type d'opération du titre
                     val operation = extractOperationType(title, "Mixx by Yas")
                     "Mixx by Yas - $operation"
                 }
@@ -430,31 +412,24 @@ fun getAppNameFromPackage(packageName: String, title: String): String {
         else -> packageName.split(".").last().capitalize(java.util.Locale.getDefault())
     }
 }
-// Fonction auxiliaire pour extraire le type d'opération
-private fun extractOperationType(title: String, serviceName: String): String {
-    // Supprimer le nom du service du titre pour isoler l'opération
-    val serviceRemoved = title.replace(serviceName, "", ignoreCase = true).trim()
 
-    // Rechercher des mots clés courants pour les opérations
+private fun extractOperationType(title: String, serviceName: String): String {
+    val serviceRemoved = title.replace(serviceName, "", ignoreCase = true).trim()
     return when {
         serviceRemoved.contains("recu", ignoreCase = true) -> "Transfert Reçu"
         serviceRemoved.contains("transfert", ignoreCase = true) -> "Transfert envoyé"
         serviceRemoved.contains("depot", ignoreCase = true) -> "Dépôt"
         serviceRemoved.contains("retire", ignoreCase = true) -> "Retrait"
         serviceRemoved.contains("operation de", ignoreCase = true) -> "Paiement"
-        // Ajouter d'autres types d'opérations selon vos besoins
-        else -> serviceRemoved.take(20) // Prendre les 20 premiers caractères si aucun mot-clé reconnu
+        else -> serviceRemoved.take(20)
     }
 }
 
-// Helper function to format amount with thousand separators
-// Improved formatAmount function to handle larger amounts with proper formatting
 private fun formatAmount(amount: Double): String {
-    val formatter = NumberFormat.getNumberInstance(Locale.FRANCE) // Uses space as thousand separator
+    val formatter = NumberFormat.getNumberInstance(Locale.FRANCE)
     val formattedNumber = formatter.format(amount.toLong()).replace(" ", ".")
     return "$formattedNumber Franc CFA"
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -482,7 +457,7 @@ fun HomeScreen(
     val appColor = try {
         Color(android.graphics.Color.parseColor(appColorHex))
     } catch (e: Exception) {
-        Color(0xFF006400) // Default green
+        Color(0xFF006400)
     }
 
     // Filter states
@@ -500,7 +475,6 @@ fun HomeScreen(
     val showDatePicker = remember { mutableStateOf(false) }
     val showDateRangePicker = remember { mutableStateOf(false) }
 
-    // In HomeScreen.kt, where DashboardHero is used
     val incomingTransactions by viewModel.incomingTransactions.collectAsState()
 
     // Scroll state for tracking
@@ -512,15 +486,15 @@ fun HomeScreen(
         derivedStateOf { scrollState.firstVisibleItemIndex > 0 || scrollState.firstVisibleItemScrollOffset > 100 }
     }
 
-    // Collapsible filter section - INCREASED HEIGHT FROM 250dp to 350dp
+    // ✅ NOUVEAU : Tracker l'expansion du DashboardHero
+    var isDashboardExpanded by remember { mutableStateOf(false) }
+
+    // Collapsible filter section
     var filterSectionHeight by remember { mutableStateOf(0.dp) }
     var filterSectionExpanded by remember { mutableStateOf(false) }
-    val maxHeight = remember { 350.dp } // FIXED: Increased from 250dp to accommodate all content
+    val maxHeight = remember { 350.dp }
     val density = LocalDensity.current
 
-
-
-    // Background color for the entire screen
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color(0xFFF5F5F5)
@@ -533,7 +507,6 @@ fun HomeScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Start
                         ) {
-                            // Logo image
                             Image(
                                 painter = painterResource(id = R.drawable.logo_kufay),
                                 contentDescription = "Kufay Logo",
@@ -544,7 +517,6 @@ fun HomeScreen(
                         }
                     },
                     actions = {
-                        // Filter button
                         IconButton(onClick = {
                             showFilters.value = !showFilters.value
                             if (showFilters.value) {
@@ -589,19 +561,17 @@ fun HomeScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                // This is the box that will stick to the top
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .zIndex(1f) // Makes sure it's above the scrollable content
+                        .zIndex(1f)
                 ) {
-                    Column (
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .zIndex(1f) // Makes sure it's above the scrollable content
-                    )   {
-                        // Dashboard hero that adapts based on scroll
-                        // ✨ Dashboard hero avec SearchBar intégrée
+                            .zIndex(1f)
+                    ) {
+                        // ✅ Dashboard hero avec callback onExpandedChange
                         DashboardHero(
                             modifier = Modifier.fillMaxWidth(),
                             appColor = appColor,
@@ -616,19 +586,18 @@ fun HomeScreen(
                             incomingTransactions = incomingTransactions,
                             onReadDailyTotal = {
                                 val totalText = if (dailyIncomingAmount != null)
-                                    "Total du jour ${dailyIncomingAmount?.toLong() ?:0} franc CFA"
+                                    "Total du jour ${dailyIncomingAmount?.toLong() ?: 0} franc CFA"
                                 else
                                     "aucun encaissement"
                                 viewModel.readDailyTotal(totalText)
                             },
-                            // ✨ NOUVEAUX paramètres SearchBar
                             searchQuery = searchQuery,
                             onSearchQueryChange = viewModel::setSearchQuery,
-                            notificationCount = notifications.size
+                            notificationCount = notifications.size,
+                            onExpandedChange = { isDashboardExpanded = it }  // ✅ CONNECTER le callback
                         )
-                        // ✨ Ancien SearchBar SUPPRIMÉ (maintenant intégré dans DashboardHero)
 
-                        // ✨ Filter section avec wrapContentHeight (s'adapte au contenu)
+                        // Filter section
                         AnimatedVisibility(
                             visible = showFilters.value,
                             enter = expandVertically() + fadeIn(),
@@ -637,7 +606,7 @@ fun HomeScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .wrapContentHeight() // ✨ S'adapte au contenu automatiquement
+                                    .wrapContentHeight()
                                     .clip(RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp))
                                     .background(Color(0xFFF0F0F5))
                             ) {
@@ -668,8 +637,7 @@ fun HomeScreen(
 
                                             if (newType == DateFilterType.SINGLE_DAY && selectedDate == null) {
                                                 viewModel.selectToday()
-                                            }
-                                            else if (newType == DateFilterType.DATE_RANGE && selectedDateRange == null) {
+                                            } else if (newType == DateFilterType.DATE_RANGE && selectedDateRange == null) {
                                                 viewModel.selectCurrentWeek()
                                             }
                                         },
@@ -691,11 +659,13 @@ fun HomeScreen(
                     }
                 }
 
-                // Calculate the spacer height based on the header content
-                // ✨ Hauteur TOTALE du header (dashboard + filtres si ouverts)
+                // ✅ CALCUL CORRIGÉ : Prend en compte l'expansion du DashboardHero
                 val headerHeight by remember {
                     derivedStateOf {
-                        val baseHeight = if (isDashboardCollapsed.value) 90.dp else 200.dp
+                        val baseHeight = if (isDashboardCollapsed.value) 90.dp
+                        else if (isDashboardExpanded) 350.dp  // ✅ Expanded avec breakdown
+                        else 200.dp  // ✅ Normal
+
                         if (showFilters.value) {
                             baseHeight + filterSectionHeight
                         } else {
@@ -704,32 +674,25 @@ fun HomeScreen(
                     }
                 }
 
-
-
-                // Banner Ad - descend avec le header
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = headerHeight)
-                        .wrapContentHeight()  // ✅ S'adapte au contenu
-                        .zIndex(0.9f)
-                ) {
-                    BannerAd(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color(0xFFF5F5F5))
-                    )
-                }
-
-                // Main scrollable content - SUIT la pub naturellement
+                // Main scrollable content
                 LazyColumn(
                     state = scrollState,
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(top = headerHeight),  // ✅ Header + espace pub
-                    contentPadding = PaddingValues(top = 16.dp, bottom = 6.dp, start = 8.dp, end = 8.dp)
+                        .padding(top = headerHeight),
+                    contentPadding = PaddingValues(bottom = 6.dp, start = 8.dp, end = 8.dp)
                 ) {
-                    // If no notifications, show empty state
+                    // BannerAd
+                    item {
+                        BannerAd(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                                .background(Color(0xFFF5F5F5))
+                        )
+                    }
+
+                    // Empty state or notifications
                     if (notifications.isEmpty()) {
                         item {
                             Box(
@@ -773,7 +736,6 @@ fun HomeScreen(
                             }
                         }
                     } else {
-                        // Show count and button to clear filters if any active
                         if (selectedAppTypes.isNotEmpty() || dateFilterType != DateFilterType.ALL_TIME) {
                             item {
                                 Row(
@@ -803,7 +765,6 @@ fun HomeScreen(
                             }
                         }
 
-                        // Notification items
                         items(notifications) { notification ->
                             val isReading = readingNotificationId.value == notification.id
 
@@ -834,8 +795,7 @@ fun HomeScreen(
                 }
             }
 
-            // FIXED: Move dialogs OUTSIDE the scrollable Box - place them at Scaffold level with high z-index
-            // This ensures they appear on top of everything
+            // Dialogs
             if (selectedNotification.value != null) {
                 Box(modifier = Modifier.fillMaxSize().zIndex(10f)) {
                     selectedNotification.value?.let { notification ->
@@ -847,11 +807,9 @@ fun HomeScreen(
                 }
             }
 
-            // Date Picker Dialog for single day - FIXED: Moved outside scrollable content
-            // Date Picker Dialog for single day - FIXED: Utilise le même calendrier que Date Range
             if (showDatePicker.value) {
                 Box(modifier = Modifier.fillMaxSize().zIndex(10f)) {
-                    MiniCalendarDialog(  // ✅ NOUVEAU : Même calendrier que "Période"
+                    MiniCalendarDialog(
                         initialDate = selectedDate ?: Calendar.getInstance().timeInMillis,
                         onDismiss = { showDatePicker.value = false },
                         onDateSelected = { date ->
@@ -862,7 +820,6 @@ fun HomeScreen(
                 }
             }
 
-            // Date Range Picker Dialog - FIXED: Moved outside scrollable content
             if (showDateRangePicker.value) {
                 Box(modifier = Modifier.fillMaxSize().zIndex(10f)) {
                     SimpleDateRangePickerDialog(
@@ -877,9 +834,7 @@ fun HomeScreen(
         }
     }
 }
-
-// Simple date range picker
-// Modern date range picker with quick select and calendar
+// Date range picker and calendar components (unchanged from original)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SimpleDateRangePickerDialog(
@@ -892,10 +847,9 @@ fun SimpleDateRangePickerDialog(
         }.timeInMillis)
     }
     var endDate by remember { mutableStateOf(Calendar.getInstance().timeInMillis) }
-    var showCalendarFor by remember { mutableStateOf<String?>(null) } // "start" or "end"
+    var showCalendarFor by remember { mutableStateOf<String?>(null) }
     var selectedQuickButton by remember { mutableStateOf("this_week") }
 
-    // Get theme colors
     val primaryColor = MaterialTheme.colorScheme.primary
     val surfaceColor = MaterialTheme.colorScheme.surface
 
@@ -910,20 +864,17 @@ fun SimpleDateRangePickerDialog(
                     .fillMaxWidth()
                     .padding(24.dp)
             ) {
-                // Title
                 Text(
-                    text = "Sélectionner une période", // TODO: Use stringResource when strings added
+                    text = "Sélectionner une période",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 20.dp)
                 )
 
-                // Date Input Fields
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // From Date
                     DateInputField(
                         label = "Du:",
                         date = startDate,
@@ -931,7 +882,6 @@ fun SimpleDateRangePickerDialog(
                         onClick = { showCalendarFor = "start" }
                     )
 
-                    // To Date
                     DateInputField(
                         label = "Au:",
                         date = endDate,
@@ -940,7 +890,6 @@ fun SimpleDateRangePickerDialog(
                     )
                 }
 
-                // Quick Select Label
                 Text(
                     text = "Sélection rapide :",
                     style = MaterialTheme.typography.labelMedium,
@@ -949,7 +898,6 @@ fun SimpleDateRangePickerDialog(
                     modifier = Modifier.padding(top = 20.dp, bottom = 12.dp)
                 )
 
-                // Quick Select Buttons
                 QuickSelectButtons(
                     selectedButton = selectedQuickButton,
                     primaryColor = primaryColor,
@@ -960,7 +908,6 @@ fun SimpleDateRangePickerDialog(
                     }
                 )
 
-                // Selected Range Display
                 SelectedRangeDisplay(
                     startDate = startDate,
                     endDate = endDate,
@@ -968,7 +915,6 @@ fun SimpleDateRangePickerDialog(
                     modifier = Modifier.padding(top = 20.dp, bottom = 20.dp)
                 )
 
-                // Action Buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
@@ -988,7 +934,7 @@ fun SimpleDateRangePickerDialog(
                             }
                         },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFFDB913) // Kufay yellow
+                            containerColor = Color(0xFFFDB913)
                         ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
@@ -1002,7 +948,6 @@ fun SimpleDateRangePickerDialog(
         }
     }
 
-    // Calendar Popup
     if (showCalendarFor != null) {
         MiniCalendarDialog(
             initialDate = if (showCalendarFor == "start") startDate else endDate,
@@ -1024,7 +969,6 @@ fun SimpleDateRangePickerDialog(
     }
 }
 
-// Date Input Field Component
 @Composable
 private fun DateInputField(
     label: String,
@@ -1077,7 +1021,6 @@ private fun DateInputField(
     }
 }
 
-// Quick Select Buttons
 @Composable
 private fun QuickSelectButtons(
     selectedButton: String,
@@ -1088,7 +1031,6 @@ private fun QuickSelectButtons(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Row 1
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1135,7 +1077,6 @@ private fun QuickSelectButtons(
             )
         }
 
-        // Row 2
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1182,7 +1123,6 @@ private fun QuickSelectButtons(
     }
 }
 
-// Individual Quick Button
 @Composable
 private fun QuickSelectButton(
     text: String,
@@ -1217,7 +1157,6 @@ private fun QuickSelectButton(
     }
 }
 
-// Selected Range Display
 @Composable
 private fun SelectedRangeDisplay(
     startDate: Long,
@@ -1254,7 +1193,6 @@ private fun SelectedRangeDisplay(
     }
 }
 
-// Mini Calendar Dialog
 @Composable
 private fun MiniCalendarDialog(
     initialDate: Long,
@@ -1271,7 +1209,6 @@ private fun MiniCalendarDialog(
             tonalElevation = 3.dp
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                // Header
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -1306,7 +1243,6 @@ private fun MiniCalendarDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Day headers
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -1324,14 +1260,12 @@ private fun MiniCalendarDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Calendar grid
                 CalendarGrid(displayMonth, displayYear, initialDate, onDateSelected)
             }
         }
     }
 }
 
-// Calendar Grid
 @Composable
 private fun CalendarGrid(
     month: Int,
@@ -1386,7 +1320,6 @@ private fun CalendarGrid(
     }
 }
 
-// Calendar Day
 @Composable
 private fun CalendarDay(
     day: Int,
@@ -1420,9 +1353,8 @@ private fun CalendarDay(
             }
         )
     }
-}  // ✅ FERMER ICI - C'EST CRUCIAL
+}
 
-// Helper function to get month name - VERSION CORRECTE
 fun getMonthName(month: Int): String {
     return when (month) {
         0 -> "Janvier"
