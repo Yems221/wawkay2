@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.kufay.app.MainActivity
 import com.kufay.app.R
+import android.content.pm.ServiceInfo
 
 @AndroidEntryPoint
 class KufayNotificationListenerService : NotificationListenerService() {
