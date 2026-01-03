@@ -15,7 +15,7 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
 import net.sqlcipher.database.SupportFactory
 
-@Database(entities = [Notification::class], version = 4, exportSchema = false)
+@Database(entities = [Notification::class], version = 5, exportSchema = false)  // ✅ CHANGÉ de 4 à 5
 abstract class KufayDatabase : RoomDatabase() {
     abstract fun notificationDao(): NotificationDao
 
@@ -77,6 +77,18 @@ abstract class KufayDatabase : RoomDatabase() {
             }
         }
 
+        // ✅ NOUVELLE MIGRATION 4 -> 5 : Ajouter le champ transactionLabel
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Ajouter la colonne transactionLabel (nullable)
+                database.execSQL("ALTER TABLE notifications ADD COLUMN transactionLabel TEXT")
+
+                // ℹ️ Pas besoin de remplir les anciennes notifications
+                // Le code utilise un fallback : notification.transactionLabel ?: notification.title
+                // Les nouvelles notifications auront transactionLabel calculé automatiquement
+            }
+        }
+
         // Méthode pour obtenir la passphrase utilisée pour le chiffrement
         private fun getPassphrase(context: Context): ByteArray {
             val sharedPrefs = getEncryptedSharedPreferences(context)
@@ -118,7 +130,7 @@ abstract class KufayDatabase : RoomDatabase() {
                 KufayDatabase::class.java,
                 "kufay_database"
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)  // ✅ AJOUTÉ MIGRATION_4_5
                 .fallbackToDestructiveMigrationOnDowngrade()
                 .build()
         }
