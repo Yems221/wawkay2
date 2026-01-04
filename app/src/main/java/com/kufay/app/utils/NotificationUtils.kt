@@ -238,22 +238,97 @@ class NotificationUtils @Inject constructor(
         // ===== ORANGE MONEY & MIXX (SMS messages) =====
         else if (packageName == "com.google.android.apps.messaging") {
             if (title.contains("OrangeMoney", ignoreCase = true) || title.contains("Mixx by Yas", ignoreCase = true)) {
-                val specificPattern = """(\d+(?:,\d+)?(?:\.\d+)?)\s*(?:F|CFA|XOF)""".toRegex(RegexOption.IGNORE_CASE)
+                val specificPattern =
+                    """(\d+(?:,\d+)?(?:\.\d+)?)\s*(USD|EUR|GBP|F|CFA|XOF)""".toRegex(RegexOption.IGNORE_CASE)
                 val specificMatch = specificPattern.find(text)
 
                 if (specificMatch != null) {
                     val amountStr = specificMatch.groupValues[1]
-                    val parsedAmount = if ((title.contains("OrangeMoney", ignoreCase = true) || title.contains("Mixx by Yas", ignoreCase = true)) && amountStr.contains(".")) {
-                        val parts = amountStr.split(".")
-                        parts[0].replace(",", "").toDoubleOrNull()
-                    } else {
-                        amountStr.replace(",", "").replace(".", "").toDoubleOrNull()
+                    val currencyRaw = specificMatch.groupValues[2].uppercase()
+
+                    // ✅ Normaliser la devise
+                    val currency = when (currencyRaw) {
+                        "F", "CFA", "XOF" -> "Franc CFA"
+                        else -> currencyRaw  // USD, EUR, GBP restent tels quels
                     }
-                    Log.d("KUFAY_DEBUG", "Orange Money/Mixx amount: $amountStr, parsed: $parsedAmount")
-                    return Triple(parsedAmount, "Franc CFA", Pair(amountStr, extractLabel(text)))
+
+                    // ✅ Parser selon la devise
+                    val parsedAmount = when (currency) {
+                        "Franc CFA" -> {
+                            // Parsing XOF : enlever virgules et points
+                            if (amountStr.contains(".")) {
+                                val parts = amountStr.split(".")
+                                parts[0].replace(",", "").toDoubleOrNull()
+                            } else {
+                                amountStr.replace(",", "").toDoubleOrNull()
+                            }
+                        }
+
+                        else -> {
+                            // Parsing USD/EUR : garder le point décimal
+                            amountStr.replace(",", "").toDoubleOrNull()
+                        }
+                    }
+
+                    Log.d(
+                        "KUFAY_DEBUG",
+                        "Orange Money/Mixx: $amountStr $currency, parsed: $parsedAmount"
+                    )
+                    return Triple(parsedAmount, currency, Pair(amountStr, extractLabel(text)))
+                }
+            // ✅ NOUVEAU : MIXX BY YAS avec même logique qu'Orange Money
+            else if (title.contains("Mixx by Yas", ignoreCase = true)) {
+
+                // ✅ Paiement en devises étrangères (USD, EUR, GBP)
+                val paymentPattern = """Votre paiement de\s+(\d+(?:\.\d+)?)\s+(USD|EUR|GBP)""".toRegex(RegexOption.IGNORE_CASE)
+                val paymentMatch = paymentPattern.find(text)
+
+                if (paymentMatch != null) {
+                    val amountStr = paymentMatch.groupValues[1]
+                    val currency = paymentMatch.groupValues[2].uppercase()
+                    val parsedAmount = amountStr.toDoubleOrNull()
+
+                    Log.d("KUFAY_DEBUG", "Mixx Payment: $amountStr $currency, parsed: $parsedAmount")
+                    return Triple(parsedAmount, currency, Pair("$amountStr $currency", "Paiement"))
                 }
 
-                val generalPattern = """(\d+(?:,\d+)?(?:\.\d+)?)""".toRegex()
+                // Pattern universel : capture montant + devise (XOF/CFA/USD/EUR/GBP)
+                val specificPattern = """(\d+(?:,\d+)?(?:\.\d+)?)\s*(USD|EUR|GBP|F|CFA|XOF|FCFA)""".toRegex(RegexOption.IGNORE_CASE)
+                val specificMatch = specificPattern.find(text)
+
+                if (specificMatch != null) {
+                    val amountStr = specificMatch.groupValues[1]
+                    val currencyRaw = specificMatch.groupValues[2].uppercase()
+
+                    // Normaliser la devise
+                    val currency = when (currencyRaw) {
+                        "F", "CFA", "XOF", "FCFA" -> "Franc CFA"
+                        else -> currencyRaw
+                    }
+
+                    // Parser selon la devise
+                    val parsedAmount = when (currency) {
+                        "Franc CFA" -> {
+                            if (amountStr.contains(".")) {
+                                val parts = amountStr.split(".")
+                                parts[0].replace(",", "").toDoubleOrNull()
+                            } else {
+                                amountStr.replace(",", "").toDoubleOrNull()
+                            }
+                        }
+                        else -> {
+                            amountStr.replace(",", "").toDoubleOrNull()
+                        }
+                    }
+
+                    Log.d("KUFAY_DEBUG", "Mixx: $amountStr $currency, parsed: $parsedAmount")
+                    return Triple(parsedAmount, currency, Pair(amountStr, extractLabel(text)))
+                }
+            }
+
+
+
+        val generalPattern = """(\d+(?:,\d+)?(?:\.\d+)?)""".toRegex()
                 val match = generalPattern.find(text)
 
                 if (match != null) {
@@ -479,23 +554,37 @@ class NotificationUtils @Inject constructor(
     ): String {
         return when {
             // PRIORITÉ 1 : Transactions REÇUES (tous les apps)
-            isIncomingTransaction -> "Transfert reçu"
+            isIncomingTransaction -> "Transfert Reçu"
 
-            // PRIORITÉ 2 : TRANSFERT ENVOYÉ (Orange Money & Mixx via SMS)
+            // PRIORITÉ 2 : PAIEMENT (Orange Money)
             packageName == "com.google.android.apps.messaging" &&
-                    text.contains("transfert", ignoreCase = true) &&
-                    text.contains("vers", ignoreCase = true) -> "Transfert envoyé"
+                    title.contains("OrangeMoney", ignoreCase = true) &&
+                    (text.contains("Votre operation", ignoreCase = true) ||
+                            text.contains("Votre opération", ignoreCase = true) ||
+                            text.contains("Votre paiement de", ignoreCase = true)) -> "Paiement"
 
+            // ✅ NOUVEAU : PAIEMENT (Mixx by Yas)
             packageName == "com.google.android.apps.messaging" &&
-                    text.contains("envoyé", ignoreCase = true) -> "Transfert envoyé"
+                    title.contains("Mixx by Yas", ignoreCase = true) &&
+                    (text.contains("Votre operation", ignoreCase = true) ||
+                            text.contains("Votre opération", ignoreCase = true) ||
+                            text.contains("Votre paiement de", ignoreCase = true)) -> "Paiement"
 
-            // PRIORITÉ 3 : PAIEMENT (Orange Money)
+            // PRIORITÉ 3 : TRANSFERT ENVOYÉ (Orange Money)
             packageName == "com.google.android.apps.messaging" &&
-                    text.contains("operation", ignoreCase = true) -> "Paiement effectué"
+                    title.contains("OrangeMoney", ignoreCase = true) &&
+                    (text.contains("Votre transfert", ignoreCase = true) ||
+                            text.contains("vers", ignoreCase = true)) -> "Transfert Envoyé"
+
+            // ✅ NOUVEAU : TRANSFERT ENVOYÉ (Mixx by Yas)
+            packageName == "com.google.android.apps.messaging" &&
+                    title.contains("Mixx by Yas", ignoreCase = true) &&
+                    (text.contains("envoyé", ignoreCase = true) ||
+                            text.contains("envoy", ignoreCase = true)) -> "Transfert Envoyé"
 
             // PRIORITÉ 4 : PAIEMENT (Wave Personal)
             title.contains("Paiement réussi", ignoreCase = true) ||
-                    title.contains("Payment successful", ignoreCase = true) -> "Paiement effectué"
+                    title.contains("Payment successful", ignoreCase = true) -> "Paiement"
 
             // FALLBACK : Titre original
             else -> title
