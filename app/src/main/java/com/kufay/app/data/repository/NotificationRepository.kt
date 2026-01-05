@@ -244,4 +244,23 @@ class NotificationRepository @Inject constructor(
         Log.d("KUFAY_FIX", "Fixed $fixedCount Orange Money notifications")
         return fixedCount
     }
+
+    /**
+     * ✅ Mettre à jour le transactionLabel d'une notification
+     */
+    suspend fun updateTransactionLabel(notificationId: Long, label: String) {
+        notificationDao.updateTransactionLabel(notificationId, label)
+    }
+
+    /**
+     * ✅ Mettre à jour amount, currency et transactionLabel d'une notification
+     */
+    suspend fun updateNotificationFinancialData(
+        notificationId: Long,
+        amount: Double?,
+        currency: String?,
+        transactionLabel: String?
+    ) {
+        notificationDao.updateNotificationFinancialData(notificationId, amount, currency, transactionLabel)
+    }
 }
