@@ -185,4 +185,27 @@ interface NotificationDao {
         packageName: String,
         ref: String
     ): Int
+
+    /**
+     * ✅ Mettre à jour le transactionLabel d'une notification
+     */
+    @Query("UPDATE notifications SET transactionLabel = :label WHERE id = :notificationId")
+    suspend fun updateTransactionLabel(notificationId: Long, label: String)
+
+    /**
+     * ✅ Mettre à jour les données financières d'une notification
+     */
+    @Query("""
+    UPDATE notifications 
+    SET amount = :amount, 
+        currency = :currency, 
+        transactionLabel = :transactionLabel 
+    WHERE id = :notificationId
+""")
+    suspend fun updateNotificationFinancialData(
+        notificationId: Long,
+        amount: Double?,
+        currency: String?,
+        transactionLabel: String?
+    )
 }
